@@ -1,0 +1,81 @@
+# introduction du ncx pour essayer de stabiliser ce qui se passe quand on inhibe la PMCA
+
+dV/dt = (-Ina-Ikv-Ica-Ikca-Iinj-Incx+Jabeta*5.09)/Cm
+
+#gating
+
+dh/dt=(hinf(V)-h)/tauh(V)
+ds/dt=(sinf(V)-s)/taus(V)
+da/dt=(ainf(V,Ca)-a)/taua(V,Ca)
+dCa/dt=f*(-((Ica-2*Incx)/5.090))- f*Jpmca + f*Jabeta - (gamma*(Ca-Cac))
+dCac/dt = (gamma*(Ca-Cac))/9 + Jin - Jserca
+
+
+minf(V)=alpham(V)/(alpham(V)+betam(V))
+alpham(V)=7.5*exp(0.081*(V+39))
+betam(V)=7.5*exp(-0.066*(V+39))
+
+ninf(V)=alphan(V)/(alphan(V)+betan(V))
+alphan(V)=0.85*exp(0.073*(V+38))
+betan(V)=0.85*exp(-0.018*(V+38))
+
+hinf(V)=alphah(V)/(alphah(V)+betah(V))
+tauh(V)=max(0.045,1/(alphah(V)+betah(V)))
+alphah(V)=0.6*exp(-0.089*(V+50))
+betah(V)=0.6*exp(0.089*(V+50))
+
+sinf(V)=alphas(V)/(alphas(V)+betas(V))
+taus(V)=1/(alphas(V)+betas(v))
+alphas(V)=8/(1+exp(-0.072*(V-5)))
+betas(V)=(0.1*(V+8.9))/(exp(0.2*(V+8.9))-1)
+
+ainf(V,Ca)=alphaa(V,Ca)/(alphaa(V,Ca)+betaa(V,Ca))
+taua(V,Ca)=1/(alphaa(V,Ca)+betaa(V,Ca))
+alphaa(V,Ca)=12.5/(1+aCa*exp(-0.085*V)/Ca)
+betaa(V,Ca)=7.5/(1+Ca/(bCa*exp(-0.077*V)))
+
+ggncx=gncx*(ca**nncx/(ca**nncx+kncx**nncx))
+#Courants ioniques
+Ina=gna*minf(V)**3*h*(V-Vna)
+Ikv=gk*ninf(V)**4*(V-Vk)
+Ica=gca*s**2*(V-Vca)
+Ikca=gkca*a*(V-Vk)
+Incx=ggncx*(V-Vncx)
+Jpmca = (Vpmca*Ca**2)/(Kpmca**2+Ca**2) 
+Jdiff = (gamma*(Ca-Cac))
+Jin = kin*(CaER-Cac)
+Jserca = Vm*(Cac**2)/(Cac**2+Kp**2)
+Jabeta=Vabeta*(1/(1+exp(V-q1)/q2))
+
+#init
+init V=-60,h=0.1,s=0.1,a=0.1,ca=0.03,cac=0.03
+
+#parametres variables
+param Iinj=0,Vabeta=0,gna=172,gkca=56.5,gca=58,gK=28,gamma=0.001,gncx=1.5,nncx=2,kncx=1,aCa=0.15,bCa=0.015,q1=-30,q2=23
+
+#parametres fixes
+number GF=96500e9,Vna=55,vk=-90,Vca=80,vncx=-20,Tp=308,R=8.314e12,AA=314,d=0.084
+number Kpmca=1=,Kp=0.2,f=0.01,Cm=3.14,Vm=195,kin=0.015,CaER=500,Vpmca=75
+
+#auxiliaries
+aux alpha=alphaa(V,Ca)
+aux IIK=Ikv
+aux IINa=Ina
+aux IICa=Ica
+aux IIkca=Ikca
+aux IIncx=Incx
+aux JJabeta=Jabeta
+aux JJpmca=Jpmca
+aux JJin=Jin
+aux JJserca=Jserca
+aux JJdiff=Jdiff
+aux mminf=minf(V)
+aux nninf=ninf(V)
+
+
+#axes
+@ dt=0.1,total=1000
+@ nplot=1,yp1=V
+@ bounds=1000000000
+@ xlo=0,xhi=1000,ylo=-80,yhi=20
+done
